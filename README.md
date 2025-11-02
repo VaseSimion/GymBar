@@ -1,69 +1,67 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C6 | ESP32-H2 | ESP32-P4 | ESP32-S2 | ESP32-S3 |
-| ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
+# GymBar: MPU6050-based Barbell Path Tracker
 
-# Blink Example
+This project uses an ESP32-C3 and an MPU6050 inertial measurement unit (IMU) to track the roll and pitch of a barbell during lifts. The data is transmitted wirelessly to a second ESP32, which can then be visualized in real-time on a computer.
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+## Features
 
-This example demonstrates how to blink a LED by using the GPIO driver or using the [led_strip](https://components.espressif.com/component/espressif/led_strip) library if the LED is addressable e.g. [WS2812](https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf). The `led_strip` library is installed via [component manager](main/idf_component.yml).
+*   **Real-time Roll and Pitch Tracking:** Measures the orientation of the barbell using an MPU6050.
+*   **Wireless Data Transmission:** Uses the ESP-NOW protocol for low-latency, wireless communication between two ESP32 devices.
+*   **Data Visualization:** Includes a Python script to plot the roll and pitch data in real-time.
+*   **Gyroscope Calibration:** Calibrates the gyroscope on startup for more accurate readings.
 
-## How to Use Example
+## Hardware Requirements
 
-Before project configuration and build, be sure to set the correct chip target using `idf.py set-target <chip_name>`.
+*   Two ESP32-C3 development boards (e.g., XIAO ESP32-C3)
+*   One MPU6050 accelerometer/gyroscope module
+*   Jumper wires
+*   A computer to run the Python visualization script
 
-### Hardware Required
+## Software Requirements
 
-* A development board with normal LED or addressable LED on-board (e.g., ESP32-S3-DevKitC, ESP32-C6-DevKitC etc.)
-* A USB cable for Power supply and programming
+*   [ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html) (Espressif IoT Development Framework)
+*   Python 3
+*   `pyserial` Python package (`pip install pyserial`)
+*   `matplotlib` Python package (`pip install matplotlib`)
 
-See [Development Boards](https://www.espressif.com/en/products/devkits) for more information about it.
+## Installation and Setup
 
-### Configure the Project
+### 1. Hardware Setup
 
-Open the project configuration menu (`idf.py menuconfig`).
+*   **Left Device (Transmitter):**
+    *   Connect the MPU6050 to the ESP32-C3 as follows:
+        *   MPU6050 VCC -> ESP32-C3 3V3
+        *   MPU6050 GND -> ESP32-C3 GND
+        *   MPU6050 SCL -> ESP32-C3 GPIO7
+        *   MPU6050 SDA -> ESP32-C3 GPIO6
+*   **Right Device (Receiver):**
+    *   No external hardware is required for the receiver ESP32.
 
-In the `Example Configuration` menu:
+### 2. Firmware Setup
 
-* Select the LED type in the `Blink LED type` option.
-  * Use `GPIO` for regular LED
-  * Use `LED strip` for addressable LED
-* If the LED type is `LED strip`, select the backend peripheral
-  * `RMT` is only available for ESP targets with RMT peripheral supported
-  * `SPI` is available for all ESP targets
-* Set the GPIO number used for the signal in the `Blink GPIO number` option.
-* Set the blinking period in the `Blink period in ms` option.
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    ```
+2.  **Configure the project:**
+    *   Open the project in your preferred ESP-IDF environment.
+    *   The code automatically determines the device's role (left or right) based on its MAC address. You will need to identify the MAC addresses of your two ESP32 devices and update the `mac_right` and `mac_left` arrays in `main/main.cpp`.
+3.  **Build and Flash:**
+    *   Build and flash the firmware onto both ESP32 devices using the ESP-IDF tools.
 
-### Build and Flash
+## Usage
 
-Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
+1.  **Power on both ESP32 devices.**
+2.  **Connect the receiver ESP32 to your computer via USB.**
+3.  **Run the Python plotter script:**
+    ```bash
+    python main/plotter.py <your-serial-port>
+    ```
+    (Replace `<your-serial-port>` with the correct serial port for your receiver ESP32, e.g., `COM3` on Windows or `/dev/ttyUSB0` on Linux).
+4.  A plot will appear, showing the real-time roll and pitch data from the MPU6050.
 
-(To exit the serial monitor, type ``Ctrl-]``.)
+## Future Improvements
 
-See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for full steps to configure and use ESP-IDF to build projects.
-
-## Example Output
-
-As you run the example, you will see the LED blinking, according to the previously defined period. For the addressable LED, you can also change the LED color by setting the `led_strip_set_pixel(led_strip, 0, 16, 16, 16);` (LED Strip, Pixel Number, Red, Green, Blue) with values from 0 to 255 in the [source file](main/blink_example_main.c).
-
-```text
-I (315) example: Example configured to blink addressable LED!
-I (325) example: Turning the LED OFF!
-I (1325) example: Turning the LED ON!
-I (2325) example: Turning the LED OFF!
-I (3325) example: Turning the LED ON!
-I (4325) example: Turning the LED OFF!
-I (5325) example: Turning the LED ON!
-I (6325) example: Turning the LED OFF!
-I (7325) example: Turning the LED ON!
-I (8325) example: Turning the LED OFF!
-```
-
-Note: The color order could be different according to the LED model.
-
-The pixel number indicates the pixel position in the LED strip. For a single LED, use 0.
-
-## Troubleshooting
-
-* If the LED isn't blinking, check the GPIO or the LED type selection in the `Example Configuration` menu.
-
-For any technical queries, please open an [issue](https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you soon.
+*   **Use LittleFS:** Replace NVS with LittleFS for file storage.
+*   **Data Logging:** Save the sensor data to a file on the ESP32 or the computer for later analysis.
+*   **3D Visualization:** Create a 3D visualization of the barbell's movement.
+*   **Web Interface:** Create a web interface to display the data, eliminating the need for the Python script.
